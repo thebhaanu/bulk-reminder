@@ -7,8 +7,6 @@
     <!-- Add flatpickr for better date/time picking -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <!-- Add pako.js for compression -->
-    <script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
     <style>
         :root {
             --primary-color: #3498db;
@@ -19,7 +17,6 @@
             --bg-color: #f9f9f9;
             --card-color: #fff;
             --border-color: #ddd;
-            --telegram-color: #0088cc;
         }
 
         * {
@@ -181,15 +178,6 @@
             background-color: #c0392b;
         }
 
-        .btn-telegram {
-            background-color: var(--telegram-color);
-            color: white;
-        }
-
-        .btn-telegram:hover {
-            background-color: #006699;
-        }
-
         #output {
             width: 100%;
             min-height: 120px;
@@ -261,21 +249,6 @@
             cursor: pointer;
             z-index: 100;
             display: none;
-        }
-
-        .telegram-section {
-            margin-top: 15px;
-            border-top: 1px solid var(--border-color);
-            padding-top: 15px;
-        }
-
-        .bot-username {
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            font-size: 0.9rem;
-            width: 100%;
-            margin-bottom: 10px;
         }
 
         /* Responsive design improvements */
@@ -374,20 +347,11 @@
                 </button>
             </div>
             <div id="status" class="status"></div>
-            <div class="telegram-section">
-                <h3 class="card-title">Share with Telegram Bot</h3>
-                <div class="actions">
-                    <button id="generateLinkBtn" class="btn btn-telegram">
-                        <span>Generate Telegram Link</span>
-                    </button>
-                    <button id="openTelegramBtn" class="btn btn-telegram">
-                        <span>Open in Telegram</span>
-                    </button>
-                </div>
-                <p class="help-text">
-                    Generate a deep link that will send all your reminders directly to your bot with one click!
-                </p>
-            </div>
+            <p class="help-text">
+                After generating the JSON, you can either:
+                <br>1. Copy and paste the JSON text directly using /addbulk [json] command
+                <br>2. Download the file and upload it with the /addbulk command
+            </p>
         </div>
     </div>
 
@@ -405,8 +369,6 @@
             const downloadJsonBtn = document.getElementById('downloadJsonBtn');
             const clearAllBtn = document.getElementById('clearAllBtn');
             const statusDiv = document.getElementById('status');
-            const generateLinkBtn = document.getElementById('generateLinkBtn');
-            const openTelegramBtn = document.getElementById('openTelegramBtn');
 
             // Initialize with one reminder
             addReminderItem();
@@ -418,8 +380,6 @@
             copyJsonBtn.addEventListener('click', copyToClipboard);
             downloadJsonBtn.addEventListener('click', downloadJson);
             clearAllBtn.addEventListener('click', clearAll);
-            generateLinkBtn.addEventListener('click', generateTelegramLink);
-            openTelegramBtn.addEventListener('click', openInTelegram);
 
             function showStatus(message, isSuccess = true) {
                 statusDiv.textContent = message;
@@ -592,73 +552,15 @@
                 outputTextarea.scrollIntoView({ behavior: "smooth", block: "start" });
             }
 
-            function generateTelegramLink() {
-                const { reminders, valid } = getRemindersArray();
-                
-                if (!valid) {
-                    showStatus('Please fill in all required fields correctly', false);
-                    return;
-                }
-                
-                if (reminders.length === 0) {
-                    showStatus('No valid reminders to generate link', false);
-                    return;
-                }
-                
-                // Hardcoded bot username
-                const botUsername = "komi_animeguuruu_bot";
-                
-                try {
-                    // Convert reminders to JSON string
-                    const jsonData = JSON.stringify(reminders);
-                    
-                    // Compress using zlib
-                    const compressed = pako.deflate(jsonData);
-                    
-                    // Convert to base64 and make URL safe
-                    let base64 = btoa(String.fromCharCode.apply(null, compressed))
-                        .replace(/\+/g, '-')
-                        .replace(/\//g, '_')
-                        .replace(/=+$/, '');
-                    
-                    // Create deep link - Use the tgme_start format instead of direct t.me link
-                    // This format ensures the start command is properly triggered on mobile
-                    const telegramLink = `https://telegram.me/${botUsername}?start=reminders-${base64}`;
-                    
-                    // Store the link for the Open in Telegram button
-                    openTelegramBtn.dataset.link = telegramLink;
-                    
-                    // Show in output
-                    outputTextarea.value = telegramLink;
-                    showStatus(`Successfully generated Telegram link for ${reminders.length} reminders!`);
-                    
-                } catch (error) {
-                    console.error('Error generating deep link:', error);
-                    showStatus('Failed to generate Telegram link', false);
-                }
-            }
-            
-            function openInTelegram() {
-                const link = openTelegramBtn.dataset.link;
-                
-                if (!link) {
-                    showStatus('Please generate a Telegram link first', false);
-                    return;
-                }
-                
-                // Open the link in a new tab
-                window.open(link, '_blank');
-            }
-
             function copyToClipboard() {
                 if (!outputTextarea.value) {
-                    showStatus('Nothing to copy. Generate JSON or a Telegram link first.', false);
+                    showStatus('Nothing to copy. Generate JSON first.', false);
                     return;
                 }
                 
                 outputTextarea.select();
                 document.execCommand('copy');
-                showStatus('Copied to clipboard!');
+                showStatus('JSON copied to clipboard!');
             }
 
             function downloadJson() {
@@ -667,22 +569,12 @@
                     return;
                 }
                 
-                let data = outputTextarea.value;
-                let filename = 'reminders.json';
-                let type = 'application/json';
-                
-                // If it's a Telegram link, let's save it as a text file instead
-                if (data.startsWith('https://t.me/')) {
-                    filename = 'telegram_link.txt';
-                    type = 'text/plain';
-                }
-                
-                const blob = new Blob([data], { type });
+                const blob = new Blob([outputTextarea.value], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 
                 a.href = url;
-                a.download = filename;
+                a.download = `reminders_${new Date().toISOString().slice(0, 10)}.json`;
                 document.body.appendChild(a);
                 a.click();
                 
@@ -691,7 +583,7 @@
                     window.URL.revokeObjectURL(url);
                 }, 0);
                 
-                showStatus('File downloaded!');
+                showStatus('JSON file downloaded!');
             }
 
             function clearAll() {
@@ -701,7 +593,6 @@
                     if (confirm('Are you sure you want to clear all reminders?')) {
                         remindersContainer.innerHTML = '';
                         outputTextarea.value = '';
-                        openTelegramBtn.dataset.link = '';
                         addReminderItem(); // Add one empty reminder
                         showStatus('All reminders cleared');
                     }
