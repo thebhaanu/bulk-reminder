@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Reminder Creator</title>
+    <!-- Add flatpickr for better date/time picking -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --primary-dark: #2980b9;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --text-color: #333;
+            --bg-color: #f9f9f9;
+            --card-color: #fff;
+            --border-color: #ddd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        .subheading {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 15px;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .reminders-container {
+            margin-bottom: 15px;
+        }
+
+        .reminder-item {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary-color);
+            position: relative;
+        }
+
+        .reminder-item input, .reminder-item textarea {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 0.9rem;
+            width: 100%;
+        }
+
+        .input-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .task-input-container {
+            flex: 1 1 100%;
+        }
+
+        .datetime-container {
+            flex: 1 1 100%;
+            display: flex;
+            gap: 10px;
+        }
+
+        .date-input, .time-input {
+            flex: 1;
+        }
+
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: background-color 0.3s;
+        }
+
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 12px 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        #output {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: monospace;
+            margin-top: 15px;
+            background-color: #f5f5f5;
+            resize: vertical;
+            font-size: 0.8rem;
+        }
+
+        .card-title {
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .success {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .error {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        /* Flatpickr customization */
+        .flatpickr-input {
+            background-color: white !important;
+        }
+
+        /* Add a sticky add button at the bottom for mobile */
+        .sticky-add-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 100;
+            display: none;
+        }
+
+        /* Responsive design improvements */
+        @media (max-width: 768px) {
+            .btn {
+                padding: 12px 8px;
+                font-size: 0.85rem;
+            }
+            
+            .actions {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .sticky-add-btn {
+                display: flex;
+            }
+            
+            #addReminderBtn {
+                display: none;
+            }
+            
+            .card {
+                padding: 12px;
+            }
+            
+            .reminder-item {
+                padding: 12px 10px;
+                margin-bottom: 12px;
+                padding-bottom: 15px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .card-title {
+                font-size: 1.2rem;
+            }
+            
+            .delete-btn {
+                top: 8px;
+                right: 8px;
+                width: 25px;
+                height: 25px;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .actions {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 5px;
+            }
+            
+            body {
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Bulk Reminder Creator</h1>
+            <p class="subheading">Create multiple reminders at once.</p>
+        </header>
+
+        <div class="card">
+            <h2 class="card-title">Add Reminders</h2>
+            <div class="reminders-container" id="remindersContainer">
+                <!-- Reminder items will be added here -->
+            </div>
+            <button id="addReminderBtn" class="btn btn-primary">
+                <span>+ Add New Reminder</span>
+            </button>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">Generated JSON</h2>
+            <textarea id="output" readonly placeholder="Your JSON will appear here..."></textarea>
+            <div class="actions">
+                <button id="generateJsonBtn" class="btn btn-success">
+                    <span>Generate JSON</span>
+                </button>
+                <button id="copyJsonBtn" class="btn btn-primary">
+                    <span>Copy to Clipboard</span>
+                </button>
+                <button id="downloadJsonBtn" class="btn btn-primary">
+                    <span>Download JSON</span>
+                </button>
+                <button id="clearAllBtn" class="btn btn-danger">
+                    <span>Clear All</span>
+                </button>
+            </div>
+            <div id="status" class="status"></div>
+            <p class="help-text">
+                After generating the JSON, save it as a file and upload it to your bot using the /addbulk command.
+            </p>
+        </div>
+    </div>
+
+    <!-- Sticky add button for mobile -->
+    <div class="sticky-add-btn" id="stickyAddBtn">+</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const remindersContainer = document.getElementById('remindersContainer');
+            const addReminderBtn = document.getElementById('addReminderBtn');
+            const stickyAddBtn = document.getElementById('stickyAddBtn');
+            const generateJsonBtn = document.getElementById('generateJsonBtn');
+            const outputTextarea = document.getElementById('output');
+            const copyJsonBtn = document.getElementById('copyJsonBtn');
+            const downloadJsonBtn = document.getElementById('downloadJsonBtn');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const statusDiv = document.getElementById('status');
+
+            // Initialize with one reminder
+            addReminderItem();
+
+            // Event listeners
+            addReminderBtn.addEventListener('click', addReminderItem);
+            stickyAddBtn.addEventListener('click', addReminderItem);
+            generateJsonBtn.addEventListener('click', generateJson);
+            copyJsonBtn.addEventListener('click', copyToClipboard);
+            downloadJsonBtn.addEventListener('click', downloadJson);
+            clearAllBtn.addEventListener('click', clearAll);
+
+            function showStatus(message, isSuccess = true) {
+                statusDiv.textContent = message;
+                statusDiv.className = `status ${isSuccess ? 'success' : 'error'}`;
+                statusDiv.style.display = 'block';
+                
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
+
+            function addReminderItem() {
+                const reminderItem = document.createElement('div');
+                reminderItem.className = 'reminder-item';
+                
+                const now = new Date();
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                
+                // Format the date as DD/MM/YYYY for date input
+                const formatDate = (date) => {
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                };
+                
+                // Format the time as HH:MM for time input
+                const formatTime = (date) => {
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    return `${hours}:${minutes}`;
+                };
+                
+                const defaultDate = formatDate(tomorrow);
+                const defaultTime = formatTime(now);
+                
+                reminderItem.innerHTML = `
+                    <div class="input-row">
+                        <div class="task-input-container">
+                            <input type="text" class="task-input" placeholder="Enter your reminder text" required>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="datetime-container">
+                            <div class="date-input">
+                                <input type="text" class="date-picker" placeholder="Pick a date" required>
+                            </div>
+                            <div class="time-input">
+                                <input type="text" class="time-picker" placeholder="Pick a time" required>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="delete-btn">&times;</button>
+                `;
+                
+                remindersContainer.appendChild(reminderItem);
+                
+                // Initialize flatpickr for date and time pickers
+                const datePicker = reminderItem.querySelector('.date-picker');
+                const timePicker = reminderItem.querySelector('.time-picker');
+                
+                flatpickr(datePicker, {
+                    dateFormat: "d/m/Y",
+                    defaultDate: tomorrow,
+                    disableMobile: false
+                });
+                
+                flatpickr(timePicker, {
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: "H:i",
+                    defaultDate: now,
+                    disableMobile: false
+                });
+                
+                // Add delete functionality
+                const deleteBtn = reminderItem.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', () => {
+                    if (document.querySelectorAll('.reminder-item').length > 1) {
+                        reminderItem.remove();
+                    } else {
+                        showStatus('You must have at least one reminder', false);
+                    }
+                });
+                
+                // Scroll to the new item
+                reminderItem.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+
+            function generateJson() {
+                const reminderItems = document.querySelectorAll('.reminder-item');
+                const reminders = [];
+                let valid = true;
+                
+                reminderItems.forEach(item => {
+                    const taskInput = item.querySelector('.task-input');
+                    const datePicker = item.querySelector('.date-picker');
+                    const timePicker = item.querySelector('.time-picker');
+                    
+                    // Simple validation
+                    if (!taskInput.value.trim()) {
+                        taskInput.style.borderColor = 'red';
+                        valid = false;
+                    } else {
+                        taskInput.style.borderColor = '';
+                    }
+                    
+                    if (!datePicker._flatpickr.selectedDates.length) {
+                        datePicker.style.borderColor = 'red';
+                        valid = false;
+                    } else {
+                        datePicker.style.borderColor = '';
+                    }
+                    
+                    if (!timePicker._flatpickr.selectedDates.length) {
+                        timePicker.style.borderColor = 'red';
+                        valid = false;
+                    } else {
+                        timePicker.style.borderColor = '';
+                    }
+                    
+                    if (taskInput.value.trim() && 
+                        datePicker._flatpickr.selectedDates.length && 
+                        timePicker._flatpickr.selectedDates.length) {
+                        
+                        // Combine date and time into one string
+                        const dateObj = datePicker._flatpickr.selectedDates[0];
+                        const timeObj = timePicker._flatpickr.selectedDates[0];
+                        
+                        dateObj.setHours(timeObj.getHours());
+                        dateObj.setMinutes(timeObj.getMinutes());
+                        
+                        const day = String(dateObj.getDate()).padStart(2, '0');
+                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        const year = dateObj.getFullYear();
+                        const hours = String(dateObj.getHours()).padStart(2, '0');
+                        const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                        
+                        const datetimeStr = `${day}/${month}/${year} ${hours}:${minutes}`;
+                        
+                        reminders.push({
+                            task: taskInput.value.trim(),
+                            datetime: datetimeStr
+                        });
+                    }
+                });
+                
+                if (!valid) {
+                    showStatus('Please fill in all required fields correctly', false);
+                    return;
+                }
+                
+                if (reminders.length === 0) {
+                    showStatus('No valid reminders to generate JSON', false);
+                    return;
+                }
+                
+                const jsonOutput = JSON.stringify(reminders, null, 2);
+                outputTextarea.value = jsonOutput;
+                showStatus(`Successfully generated JSON for ${reminders.length} reminders`);
+                
+                // Scroll to output area
+                outputTextarea.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+
+            function copyToClipboard() {
+                if (!outputTextarea.value) {
+                    showStatus('No JSON to copy. Generate JSON first.', false);
+                    return;
+                }
+                
+                outputTextarea.select();
+                document.execCommand('copy');
+                showStatus('JSON copied to clipboard!');
+            }
+
+            function downloadJson() {
+                if (!outputTextarea.value) {
+                    showStatus('No JSON to download. Generate JSON first.', false);
+                    return;
+                }
+                
+                const blob = new Blob([outputTextarea.value], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                
+                a.href = url;
+                a.download = `reminders_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 0);
+                
+                showStatus('JSON file downloaded!');
+            }
+
+            function clearAll() {
+                const reminderItems = document.querySelectorAll('.reminder-item');
+                
+                if (reminderItems.length > 0) {
+                    if (confirm('Are you sure you want to clear all reminders?')) {
+                        remindersContainer.innerHTML = '';
+                        outputTextarea.value = '';
+                        addReminderItem(); // Add one empty reminder
+                        showStatus('All reminders cleared');
+                    }
+                } else {
+                    showStatus('No reminders to clear', false);
+                }
+            }
+        });
+    </script>
+</body>
+</html> 
