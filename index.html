@@ -621,8 +621,9 @@
                         .replace(/\//g, '_')
                         .replace(/=+$/, '');
                     
-                    // Create deep link
-                    const telegramLink = `https://t.me/${botUsername}?start=reminders-${base64}`;
+                    // Create deep link - Use the tgme_start format instead of direct t.me link
+                    // This format ensures the start command is properly triggered on mobile
+                    const telegramLink = `https://telegram.me/${botUsername}?start=reminders-${base64}`;
                     
                     // Store the link for the Open in Telegram button
                     openTelegramBtn.dataset.link = telegramLink;
